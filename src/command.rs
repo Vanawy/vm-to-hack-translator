@@ -1,12 +1,12 @@
-use std::str::FromStr;
 use crate::segment::Segment;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Command {
     Stack {
         operation: StackOperation,
         segment: Segment,
-        offset: u16
+        offset: u16,
     },
     Arithmetic(ArithmeticCommand),
 }
@@ -14,13 +14,20 @@ pub enum Command {
 #[derive(Debug, PartialEq, Eq)]
 pub enum StackOperation {
     Push,
-    Pop
+    Pop,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ArithmeticCommand {
-    Add, Sub, Neg, Eq, Gt, Lt,
-    And, Or, Not
+    Add,
+    Sub,
+    Neg,
+    Eq,
+    Gt,
+    Lt,
+    And,
+    Or,
+    Not,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -35,34 +42,34 @@ impl FromStr for Command {
         match components.len() {
             1 => match components[0].parse::<ArithmeticCommand>() {
                 Ok(cmd) => Ok(Command::Arithmetic(cmd)),
-                Err(_) => Err(CommandParseError)
+                Err(_) => Err(CommandParseError),
             },
             3 => {
-                let op = components[0].parse::<StackOperation>();
-                let segment = components[1].parse::<Segment>();
-                let offset = components[2].parse::<u16>();
+                let operation = components[0]
+                    .parse::<StackOperation>()
+                    .map_err(|_| CommandParseError)?;
+                let segment = components[1]
+                    .parse::<Segment>()
+                    .map_err(|_| CommandParseError)?;
+                let offset = components[2]
+                    .parse::<u16>()
+                    .map_err(|_| CommandParseError)?;
 
-                if let (Ok(op), Ok(segment), Ok(offset)) = (op, segment, offset) {
-                    Ok(Command::Stack {
-                        operation: op,
-                        segment,
-                        offset
-                    })
-                }
-                else {
-                    Err(CommandParseError)
-                }
-            },
-            _ => Err(CommandParseError)
+                Ok(Command::Stack {
+                    operation,
+                    segment,
+                    offset,
+                })
+            }
+            _ => Err(CommandParseError),
         }
-
     }
 }
 
 impl FromStr for ArithmeticCommand {
     type Err = CommandParseError;
 
-    fn from_str(s: &str) -> Result<Self,Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "add" => Ok(ArithmeticCommand::Add),
             "sub" => Ok(ArithmeticCommand::Sub),
@@ -73,18 +80,51 @@ impl FromStr for ArithmeticCommand {
             "and" => Ok(ArithmeticCommand::And),
             "or" => Ok(ArithmeticCommand::Or),
             "not" => Ok(ArithmeticCommand::Not),
-            _ => Err(CommandParseError)
+            _ => Err(CommandParseError),
         }
     }
 }
 
 impl FromStr for StackOperation {
     type Err = CommandParseError;
-    fn from_str(s: &str) -> Result<Self,Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "push" => Ok(StackOperation::Push),
             "pop" => Ok(StackOperation::Pop),
-            _ => Err(CommandParseError)
+            _ => Err(CommandParseError),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_stack_commands() {
+        assert_eq!(
+            Command::Stack {
+                operation: StackOperation::Pop,
+                segment: Segment::Argument,
+                offset: 1,
+            },
+            "pop argument 1".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::Stack {
+                operation: StackOperation::Push,
+                segment: Segment::Constant,
+                offset: 36,
+            },
+            "push constant 36".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::Stack {
+                operation: StackOperation::Pop,
+                segment: Segment::This,
+                offset: 6,
+            },
+            "pop this 6".parse::<Command>().unwrap()
+        );
     }
 }
