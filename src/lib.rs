@@ -1,8 +1,8 @@
-use regex::Regex;
 use crate::command::Command;
+use regex::Regex;
 
-mod segment;
 mod command;
+mod segment;
 
 pub fn translate(input: String) -> String {
     let re = Regex::new(r"\s+").expect("Can't parse regex");
@@ -11,10 +11,9 @@ pub fn translate(input: String) -> String {
         .lines()
         .map(|s| s.trim().to_lowercase())
         .map(|s| re.replace_all(s.as_str(), " ").to_string())
-        .filter(|s| !(s.is_empty() || s.starts_with("//"))
-        )
+        .filter(|s| !(s.is_empty() || s.starts_with("//")))
         .map(|s| (s.clone(), s.parse::<Command>()))
-        .map(|(source, cmd)| format!("{:?} - {:?}", source,  cmd))
+        .map(|(source, cmd)| format!("{:?}\n{:?}\n", source, cmd))
         .map(|s| s.into())
         .collect();
 

@@ -20,11 +20,11 @@ pub enum StackOperation {
 #[derive(Debug, PartialEq, Eq)]
 pub enum ArithmeticCommand {
     Add,
-    Sub,
-    Neg,
-    Eq,
-    Gt,
-    Lt,
+    Subtract,
+    Negate,
+    Equals,
+    GreaterThan,
+    LessThan,
     And,
     Or,
     Not,
@@ -72,11 +72,11 @@ impl FromStr for ArithmeticCommand {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "add" => Ok(ArithmeticCommand::Add),
-            "sub" => Ok(ArithmeticCommand::Sub),
-            "neg" => Ok(ArithmeticCommand::Neg),
-            "eq" => Ok(ArithmeticCommand::Eq),
-            "gt" => Ok(ArithmeticCommand::Gt),
-            "lt" => Ok(ArithmeticCommand::Lt),
+            "sub" => Ok(ArithmeticCommand::Subtract),
+            "neg" => Ok(ArithmeticCommand::Negate),
+            "eq" => Ok(ArithmeticCommand::Equals),
+            "gt" => Ok(ArithmeticCommand::GreaterThan),
+            "lt" => Ok(ArithmeticCommand::LessThan),
             "and" => Ok(ArithmeticCommand::And),
             "or" => Ok(ArithmeticCommand::Or),
             "not" => Ok(ArithmeticCommand::Not),
@@ -126,5 +126,29 @@ mod tests {
             },
             "pop this 6".parse::<Command>().unwrap()
         );
+    }
+
+    #[test]
+    fn parse_arithmetic_commands() {
+        assert_eq!(
+            Command::Arithmetic(ArithmeticCommand::Add),
+            "add".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::Arithmetic(ArithmeticCommand::Subtract),
+            "sub".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::Arithmetic(ArithmeticCommand::Negate),
+            "neg".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::Arithmetic(ArithmeticCommand::LessThan),
+            "lt".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::Arithmetic(ArithmeticCommand::GreaterThan),
+            "gt".parse::<Command>().unwrap()
+        )
     }
 }
