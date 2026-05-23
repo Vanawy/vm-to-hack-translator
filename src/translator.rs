@@ -100,43 +100,34 @@ impl Translator {
     }
 
     fn translate_arithmetic(&mut self, command: ArithmeticCommand) -> Vec<String> {
-        let mut res = vec![
-            pop_data_from_stack(), // Arg0 to reg D
-        ];
         match command {
             ArithmeticCommand::Negate => {
-                res.push("D=-D".into());
-                res.push(push_data_to_stack());
+                vec![pop_data_from_stack(), "D=-D".into(), push_data_to_stack()]
             }
             ArithmeticCommand::Not => {
-                res.push("D=!D".into());
-                res.push(push_data_to_stack());
+                vec![pop_data_from_stack(), "D=!D".into(), push_data_to_stack()]
             }
             ArithmeticCommand::Equals
             | ArithmeticCommand::GreaterThan
-            | ArithmeticCommand::LessThan => res = self.compare(command),
-            _ => {
-                res.push(
-                    indoc! {
-                        "@SP
-                        AM=M-1"
-                    }
-                    .into(), // Arg1 to reg M
-                );
+            | ArithmeticCommand::LessThan => self.compare(command),
+            ArithmeticCommand::Add => self.binary_op("D=D+M"),
+            ArithmeticCommand::Subtract => self.binary_op("D=M-D"),
+            ArithmeticCommand::And => self.binary_op("D=D&M"),
+            ArithmeticCommand::Or => self.binary_op("D=D|M"),
+        }
+    }
 
-                res.push(match command {
-                    ArithmeticCommand::Add => "D=D+M".into(),
-                    ArithmeticCommand::Subtract => "D=M-D".into(),
-                    ArithmeticCommand::And => "D=D&M".into(),
-                    ArithmeticCommand::Or => "D=D|M".into(),
-                    _ => unreachable!(),
-                });
-
-                res.push(push_data_to_stack());
+    fn binary_op(&self, operation: &str) -> Vec<String> {
+        vec![
+            pop_data_from_stack(),
+            indoc! {
+                "@SP
+                AM=M-1"
             }
-        };
-
-        res
+            .into(),
+            operation.into(),
+            push_data_to_stack(),
+        ]
     }
 
     fn constant_push(&self, index: u16) -> Vec<String> {
