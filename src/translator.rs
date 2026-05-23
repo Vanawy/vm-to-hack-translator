@@ -106,9 +106,11 @@ impl Translator {
         match command {
             ArithmeticCommand::Negate => {
                 res.push("D=-D".into());
+                res.push(push_data_to_stack());
             }
             ArithmeticCommand::Not => {
                 res.push("D=!D".into());
+                res.push(push_data_to_stack());
             }
             ArithmeticCommand::Equals
             | ArithmeticCommand::GreaterThan
