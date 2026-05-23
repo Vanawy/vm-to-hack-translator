@@ -38,7 +38,7 @@ impl Translator {
             Segment::That => "@THAT".into(),
 
             // offset included
-            Segment::Static => format!("{}.{}", self.filename, offset),
+            Segment::Static => format!("@{}.{}", self.filename, offset),
             Segment::Constant => format!("@{}", offset),
             Segment::Pointer => match offset {
                 0 => "@THIS".into(),
@@ -50,7 +50,11 @@ impl Translator {
     }
     fn translate_stack(&self, op: StackOperation, segment: Segment, offset: u16) -> Vec<String> {
         match segment {
-            Segment::Argument | Segment::Local | Segment::This | Segment::That => match op {
+            Segment::Argument
+            | Segment::Local
+            | Segment::This
+            | Segment::That
+            | Segment::Pointer => match op {
                 StackOperation::Push => self.segment_push(segment, offset),
                 StackOperation::Pop => self.segment_pop(segment, offset),
             },
@@ -62,7 +66,10 @@ impl Translator {
                 StackOperation::Push => self.temp_push(offset),
                 StackOperation::Pop => self.temp_pop(offset),
             },
-            _ => todo!(),
+            Segment::Static => match op {
+                StackOperation::Push => self.static_push(offset),
+                StackOperation::Pop => self.static_pop(offset),
+            },
         }
     }
 
@@ -140,6 +147,28 @@ impl Translator {
             "D=M".into(),                                    // D = *SP
             self.get_pointer_address(Segment::Temp, offset), // @addr
             "M=D".into(),                                    // addr = D
+        ]
+    }
+
+    fn static_push(&self, offset: u16) -> Vec<String> {
+        // *SP = Foo.i
+        // SP ++
+        vec![
+            self.get_pointer_address(Segment::Static, offset),
+            "D=M".into(),
+            write_data_to_stack(),
+            increment_stack_pointer(),
+        ]
+    }
+
+    fn static_pop(&self, offset: u16) -> Vec<String> {
+        // SP--
+        // *Foo.i = *SP
+        vec![
+            decrement_stack_pointer(),
+            "D=M".into(),
+            self.get_pointer_address(Segment::Static, offset),
+            "M=D".into(),
         ]
     }
 }

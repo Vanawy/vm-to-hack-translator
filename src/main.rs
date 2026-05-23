@@ -1,3 +1,4 @@
+use std::io::ErrorKind;
 use std::{env::args, fs};
 
 fn main() {
@@ -11,7 +12,12 @@ fn main() {
     let output = vm_translator::translate(input_path.clone().into(), input);
     let filename = input_path.split("/").last().expect("Can't get filename");
     let output_path = format!("out/{}.hack", filename.replace(".vm", ""));
-    fs::create_dir("out").expect("Can't create dir");
+    let res = fs::create_dir("out");
+    if let Err(err) = res {
+        if err.kind() != ErrorKind::AlreadyExists {
+            panic!("{}", err);
+        }
+    }
     println!("Output: {}", output_path);
 
     fs::write(output_path, output).expect("Can't write output to file");
