@@ -9,7 +9,7 @@ mod translator;
 pub fn translate(filename: String, input: String) -> String {
     let re = Regex::new(r"\s+").expect("Can't parse regex");
 
-    let translator = Translator { filename };
+    let mut translator = Translator::new(filename);
 
     let lines: Vec<String> = input
         .lines()

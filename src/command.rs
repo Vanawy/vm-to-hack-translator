@@ -7,7 +7,7 @@ pub enum Command {
     Stack {
         operation: StackOperation,
         segment: Segment,
-        offset: u16,
+        index: u16,
     },
     Arithmetic(ArithmeticCommand),
 }
@@ -18,9 +18,9 @@ impl Display for Command {
             Command::Stack {
                 operation,
                 segment,
-                offset,
+                index,
             } => {
-                write!(f, "{:?} {:?} {}", operation, segment, offset)
+                write!(f, "{:?} {:?} {}", operation, segment, index)
             }
             Command::Arithmetic(command) => write!(f, "{:?}", command),
         }
@@ -67,14 +67,14 @@ impl FromStr for Command {
                 let segment = components[1]
                     .parse::<Segment>()
                     .map_err(|_| CommandParseError)?;
-                let offset = components[2]
+                let index = components[2]
                     .parse::<u16>()
                     .map_err(|_| CommandParseError)?;
 
                 Ok(Command::Stack {
                     operation,
                     segment,
-                    offset,
+                    index,
                 })
             }
             _ => Err(CommandParseError),
@@ -122,7 +122,7 @@ mod tests {
             Command::Stack {
                 operation: StackOperation::Pop,
                 segment: Segment::Argument,
-                offset: 1,
+                index: 1,
             },
             "pop argument 1".parse::<Command>().unwrap()
         );
@@ -130,7 +130,7 @@ mod tests {
             Command::Stack {
                 operation: StackOperation::Push,
                 segment: Segment::Constant,
-                offset: 36,
+                index: 36,
             },
             "push constant 36".parse::<Command>().unwrap()
         );
@@ -138,7 +138,7 @@ mod tests {
             Command::Stack {
                 operation: StackOperation::Pop,
                 segment: Segment::This,
-                offset: 6,
+                index: 6,
             },
             "pop this 6".parse::<Command>().unwrap()
         );
