@@ -149,6 +149,6 @@ mod tests {
         assert_eq!(
             Command::Arithmetic(ArithmeticCommand::GreaterThan),
             "gt".parse::<Command>().unwrap()
-        )
+        );
     }
 }

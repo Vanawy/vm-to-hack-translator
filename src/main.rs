@@ -8,8 +8,10 @@ fn main() {
     println!("Input: {}", input_path);
     let input = fs::read_to_string(&input_path).expect("Can't read input file");
 
-    let output = vm_translator::translate(input);
-    let output_path = input_path.replace(".vm", "") + ".hack";
+    let output = vm_translator::translate(input_path.clone().into(), input);
+    let filename = input_path.split("/").last().expect("Can't get filename");
+    let output_path = format!("out/{}.hack", filename.replace(".vm", ""));
+    fs::create_dir("out").expect("Can't create dir");
     println!("Output: {}", output_path);
 
     fs::write(output_path, output).expect("Can't write output to file");
