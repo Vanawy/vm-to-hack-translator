@@ -9,8 +9,8 @@ fn main() {
     println!("Input: {}", input_path);
     let input = fs::read_to_string(&input_path).expect("Can't read input file");
 
-    let output = vm_translator::translate(input_path.clone().into(), input);
     let filename = input_path.split("/").last().expect("Can't get filename");
+    let output = vm_translator::translate(filename.into(), input);
     let output_path = format!("out/{}.asm", filename.replace(".vm", ""));
     let res = fs::create_dir("out");
     if let Err(err) = res {
