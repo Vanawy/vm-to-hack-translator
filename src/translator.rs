@@ -10,7 +10,7 @@ const TEMP_BASE_ADDR: u16 = 5;
 
 impl Translator {
     pub fn code(&self, command: Command) -> Vec<String> {
-        println!("-> {:?}", command);
+        println!("-> {}", command);
 
         let mut res = vec![format!("//{:?}", command)];
         match command {
@@ -50,11 +50,7 @@ impl Translator {
     }
     fn translate_stack(&self, op: StackOperation, segment: Segment, offset: u16) -> Vec<String> {
         match segment {
-            Segment::Argument
-            | Segment::Local
-            | Segment::This
-            | Segment::That
-            | Segment::Pointer => match op {
+            Segment::Argument | Segment::Local | Segment::This | Segment::That => match op {
                 StackOperation::Push => self.segment_push(segment, offset),
                 StackOperation::Pop => self.segment_pop(segment, offset),
             },
@@ -69,6 +65,10 @@ impl Translator {
             Segment::Static => match op {
                 StackOperation::Push => self.static_push(offset),
                 StackOperation::Pop => self.static_pop(offset),
+            },
+            Segment::Pointer => match op {
+                StackOperation::Push => self.pointer_push(offset),
+                StackOperation::Pop => self.pointer_pop(offset),
             },
         }
     }
@@ -87,11 +87,7 @@ impl Translator {
             res.push("A=D".into());
         }
         res.push("D=M".into()); // D = *addr
-
-        // *SP = *addr
-        res.push(write_data_to_stack());
-        // SP++
-        res.push(increment_stack_pointer());
+        res.push(push_data_to_stack());
         res
     }
 
@@ -103,8 +99,7 @@ impl Translator {
         vec![
             self.get_pointer_address(Segment::Constant, offset),
             "D=A".into(), // D = offset
-            write_data_to_stack(),
-            increment_stack_pointer(),
+            push_data_to_stack(),
         ]
     }
 
@@ -122,8 +117,7 @@ impl Translator {
         res.push("@R13".into());
         res.push("M=D".into()); // addr = *segment + offset
 
-        res.push(decrement_stack_pointer()); // SP--
-        res.push("A=M\nD=M".into()); // D = *SP
+        res.push(pop_data_from_stack()); // SP--
         res.push("@R13\nA=M\nM=D".into()); // *addr = D
         res
     }
@@ -134,8 +128,7 @@ impl Translator {
         vec![
             self.get_pointer_address(Segment::Temp, offset),
             "D=M".into(),
-            write_data_to_stack(),
-            increment_stack_pointer(),
+            push_data_to_stack(),
         ]
     }
 
@@ -143,8 +136,7 @@ impl Translator {
         // SP--
         // [base_temp+offset] = *SP
         vec![
-            decrement_stack_pointer(),                       // SP --
-            "D=M".into(),                                    // D = *SP
+            pop_data_from_stack(),                           // SP -- // D = *SP
             self.get_pointer_address(Segment::Temp, offset), // @addr
             "M=D".into(),                                    // addr = D
         ]
@@ -156,8 +148,7 @@ impl Translator {
         vec![
             self.get_pointer_address(Segment::Static, offset),
             "D=M".into(),
-            write_data_to_stack(),
-            increment_stack_pointer(),
+            push_data_to_stack(),
         ]
     }
 
@@ -165,38 +156,57 @@ impl Translator {
         // SP--
         // *Foo.i = *SP
         vec![
-            decrement_stack_pointer(),
-            "D=M".into(),
+            pop_data_from_stack(),
             self.get_pointer_address(Segment::Static, offset),
+            "M=D".into(),
+        ]
+    }
+
+    fn pointer_push(&self, offset: u16) -> Vec<String> {
+        if offset > 1 {
+            unreachable!();
+        }
+        // *SP = THIS/THAT
+        // SP++
+        vec![
+            self.get_pointer_address(Segment::Pointer, offset),
+            "D=M".into(),
+            push_data_to_stack(),
+        ]
+    }
+
+    fn pointer_pop(&self, offset: u16) -> Vec<String> {
+        if offset > 1 {
+            unreachable!();
+        }
+        // SP--
+        // THIS/THAT = *SP
+        vec![
+            pop_data_from_stack(),
+            self.get_pointer_address(Segment::Pointer, offset),
             "M=D".into(),
         ]
     }
 }
 
-/// *SP = D
-fn write_data_to_stack() -> String {
+/// *SP = D<p>
+/// SP++
+fn push_data_to_stack() -> String {
     indoc! {
         "@SP
         A=M
-        M=D"
-    }
-    .into()
-}
-
-/// SP++
-fn increment_stack_pointer() -> String {
-    indoc! {
-        "@SP
+        M=D
         M=M+1"
     }
     .into()
 }
 
 /// SP--
-fn decrement_stack_pointer() -> String {
+fn pop_data_from_stack() -> String {
     indoc! {
         "@SP
-        M=M-1"
+        A=M-1
+        D=M"
     }
     .into()
 }

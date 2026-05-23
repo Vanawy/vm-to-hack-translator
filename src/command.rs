@@ -1,4 +1,5 @@
 use crate::segment::Segment;
+use std::fmt::Display;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -9,6 +10,21 @@ pub enum Command {
         offset: u16,
     },
     Arithmetic(ArithmeticCommand),
+}
+
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Command::Stack {
+                operation,
+                segment,
+                offset,
+            } => {
+                write!(f, "{:?} {:?} {}", operation, segment, offset)
+            }
+            Command::Arithmetic(command) => write!(f, "{:?}", command),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
