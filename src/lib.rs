@@ -1,5 +1,5 @@
 use crate::command::Command;
-use crate::translator::Translator;
+pub use crate::translator::Translator;
 use regex::Regex;
 
 mod command;
