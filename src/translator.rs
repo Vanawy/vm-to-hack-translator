@@ -18,7 +18,7 @@ impl Translator {
     }
 
     pub fn code(&mut self, command: Command) -> Vec<String> {
-        println!("-> {}", command);
+        // println!("-> {}", command);
 
         let mut res = vec![format!("// {}", command)];
         match command {
@@ -31,7 +31,7 @@ impl Translator {
         }
         .iter()
         .for_each(|s| {
-            println!("{}", s);
+            // println!("{}", s);
             res.push(s.to_string());
         });
         res
@@ -66,17 +66,9 @@ impl Translator {
                 StackOperation::Push => self.constant_push(index),
                 StackOperation::Pop => unreachable!(),
             },
-            Segment::Temp => match op {
-                StackOperation::Push => self.temp_push(index),
-                StackOperation::Pop => self.temp_pop(index),
-            },
-            Segment::Static => match op {
-                StackOperation::Push => self.static_push(index),
-                StackOperation::Pop => self.static_pop(index),
-            },
-            Segment::Pointer => match op {
-                StackOperation::Push => self.pointer_push(index),
-                StackOperation::Pop => self.pointer_pop(index),
+            Segment::Temp | Segment::Pointer | Segment::Static => match op {
+                StackOperation::Push => self.special_segment_push(segment, index),
+                StackOperation::Pop => self.special_segment_pop(segment, index),
             },
         }
     }
@@ -157,69 +149,19 @@ impl Translator {
         res
     }
 
-    fn temp_push(&self, index: u16) -> Vec<String> {
-        // *SP = *[base_temp+index]
-        // SP++
+    fn special_segment_push(&self, segment: Segment, index: u16) -> Vec<String> {
         vec![
-            self.get_pointer_address(Segment::Temp, index),
+            self.get_pointer_address(segment, index),
             "D=M".into(),
             push_data_to_stack(),
         ]
     }
 
-    fn temp_pop(&self, index: u16) -> Vec<String> {
-        // SP--
-        // [base_temp+index] = *SP
+    fn special_segment_pop(&self, segment: Segment, index: u16) -> Vec<String> {
         vec![
-            pop_data_from_stack(),                          // SP -- // D = *SP
-            self.get_pointer_address(Segment::Temp, index), // @addr
-            "M=D".into(),                                   // addr = D
-        ]
-    }
-
-    fn static_push(&self, index: u16) -> Vec<String> {
-        // *SP = Foo.i
-        // SP ++
-        vec![
-            self.get_pointer_address(Segment::Static, index),
-            "D=M".into(),
-            push_data_to_stack(),
-        ]
-    }
-
-    fn static_pop(&self, index: u16) -> Vec<String> {
-        // SP--
-        // *Foo.i = *SP
-        vec![
-            pop_data_from_stack(),
-            self.get_pointer_address(Segment::Static, index),
-            "M=D".into(),
-        ]
-    }
-
-    fn pointer_push(&self, index: u16) -> Vec<String> {
-        if index > 1 {
-            unreachable!();
-        }
-        // *SP = THIS/THAT
-        // SP++
-        vec![
-            self.get_pointer_address(Segment::Pointer, index),
-            "D=M".into(),
-            push_data_to_stack(),
-        ]
-    }
-
-    fn pointer_pop(&self, index: u16) -> Vec<String> {
-        if index > 1 {
-            unreachable!();
-        }
-        // SP--
-        // THIS/THAT = *SP
-        vec![
-            pop_data_from_stack(),
-            self.get_pointer_address(Segment::Pointer, index),
-            "M=D".into(),
+            pop_data_from_stack(),                    // SP -- // D = *SP
+            self.get_pointer_address(segment, index), // @addr
+            "M=D".into(),                             // addr = D
         ]
     }
 
