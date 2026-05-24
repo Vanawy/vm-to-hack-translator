@@ -1,6 +1,6 @@
 use crate::command::{ArithmeticCommand, Command, StackOperation};
 use crate::segment::Segment;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 
 pub struct Translator {
     pub filename: String,
@@ -174,20 +174,18 @@ impl Translator {
     fn compare(&mut self, cmd: ArithmeticCommand) -> Vec<String> {
         vec![
             pop_data_from_stack(), // pop arg 1 to D
-            format!(
-                indoc! {
-                    "@SP
-                    AM=M-1
-                    D=M-D
-                    @CMP_TRUE_{cmp_counter}
-                    D;{jump}
-                    D=0
-                    @CMP_END_{cmp_counter}
-                    0;JMP
-                    (CMP_TRUE_{cmp_counter})
-                    D=-1
-                    (CMP_END_{cmp_counter})"
-                },
+            formatdoc! {
+                "@SP
+                AM=M-1
+                D=M-D
+                @CMP_TRUE_{cmp_counter}
+                D;{jump}
+                D=0
+                @CMP_END_{cmp_counter}
+                0;JMP
+                (CMP_TRUE_{cmp_counter})
+                D=-1
+                (CMP_END_{cmp_counter})",
                 cmp_counter = self.advance_counter(),
                 jump = match cmd {
                     ArithmeticCommand::Equals => "JEQ",
@@ -195,7 +193,7 @@ impl Translator {
                     ArithmeticCommand::LessThan => "JLT",
                     _ => unreachable!(),
                 }
-            ),
+            },
             push_data_to_stack(),
         ]
     }
