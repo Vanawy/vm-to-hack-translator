@@ -11,7 +11,7 @@ fn compare(filename: String) {
     let vm = path.join(filename.clone() + ".vm");
 
     assert_eq!(
-        translate(filename.clone() + ".vm", fs::read_to_string(vm).unwrap()),
+        translate(filename.clone() + ".vm", fs::read_to_string(vm).unwrap()).unwrap(),
         fs::read_to_string(asm).unwrap()
     )
 }

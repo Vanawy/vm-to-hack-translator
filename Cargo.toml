@@ -6,3 +6,21 @@ edition = "2024"
 [dependencies]
 regex = "1.12.3"
 indoc = "2.0.7"
+
+[lints.clippy]
+pedantic = { level = "deny", priority = -1 } # UM, ACTUALLY
+nursery = { level = "deny", priority = -1 }  # BETA LINTS
+# DENY PANICS
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+unchecked_time_subtraction = "deny"
+todo = "deny"
+string_slice = "deny"
+panic_in_result_fn = "deny"
+panic = "deny"
+exit = "deny"
+as_conversions = "deny"

@@ -1,6 +1,5 @@
 use crate::command::Command;
 pub use crate::translator::Translator;
-use regex::Regex;
 
 mod command;
 mod segment;
@@ -12,16 +11,14 @@ pub struct TranslatorError {
 }
 
 pub fn translate(filename: String, input: String) -> Result<String, TranslatorError> {
-    let re = Regex::new(r"\s+").expect("Can't parse regex");
-
     let mut translator = Translator::new(filename.clone());
 
     let lines: Vec<String> = input
         .lines()
         .enumerate()
         .map(|(n, s)| (n, s.trim().to_lowercase()))
-        .map(|(n, s)| (n, re.replace_all(s.as_str(), " ").to_string()))
-        .filter(|(_, s)| !(s.is_empty() || s.starts_with("//")))
+        .map(|(n, s)| (n, remove_comment(&s)))
+        .filter(|(_, s)| !s.is_empty())
         .map(|(n, s)| {
             let command = s.parse::<Command>().map_err(|error| TranslatorError {
                 message: format!("line {}: {:?}", n + 1, error),
@@ -35,4 +32,23 @@ pub fn translate(filename: String, input: String) -> Result<String, TranslatorEr
         .collect();
 
     Ok(lines.join("\n"))
+}
+
+fn remove_comment(input: &str) -> String {
+    input
+        .split_once("//")
+        .map_or(input, |(command, _)| command)
+        .trim()
+        .into()
+}
+
+#[cfg(test)]
+mod lib {
+    use super::*;
+    #[test]
+    fn comments() {
+        assert_eq!("abc", remove_comment("abc // asd"));
+        assert_eq!("", remove_comment("// asd"));
+        assert_eq!("abc", remove_comment("abc"));
+    }
 }
