@@ -53,7 +53,7 @@ impl FromStr for Command {
     type Err = CommandParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let components = s.split(' ').collect::<Vec<&str>>();
+        let components = s.split_whitespace().collect::<Vec<&str>>();
 
         match components.len() {
             1 => match components[0].parse::<ArithmeticCommand>() {
