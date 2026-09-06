@@ -47,29 +47,32 @@ pub enum ArithmeticCommand {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct CommandParseError;
+pub struct CommandParseError {
+    command: String,
+}
 
 impl FromStr for Command {
     type Err = CommandParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let components = s.split_whitespace().collect::<Vec<&str>>();
+        let parse_error = || CommandParseError {
+            command: s.to_owned(),
+        };
 
         match components.len() {
             1 => match components[0].parse::<ArithmeticCommand>() {
                 Ok(cmd) => Ok(Command::Arithmetic(cmd)),
-                Err(_) => Err(CommandParseError),
+                Err(_) => Err(parse_error()),
             },
             3 => {
                 let operation = components[0]
                     .parse::<StackOperation>()
-                    .map_err(|_| CommandParseError)?;
+                    .map_err(|_| parse_error())?;
                 let segment = components[1]
                     .parse::<Segment>()
-                    .map_err(|_| CommandParseError)?;
-                let index = components[2]
-                    .parse::<u16>()
-                    .map_err(|_| CommandParseError)?;
+                    .map_err(|_| parse_error())?;
+                let index = components[2].parse::<u16>().map_err(|_| parse_error())?;
 
                 Ok(Command::Stack {
                     operation,
@@ -77,7 +80,7 @@ impl FromStr for Command {
                     index,
                 })
             }
-            _ => Err(CommandParseError),
+            _ => Err(parse_error()),
         }
     }
 }
@@ -96,7 +99,9 @@ impl FromStr for ArithmeticCommand {
             "and" => Ok(ArithmeticCommand::And),
             "or" => Ok(ArithmeticCommand::Or),
             "not" => Ok(ArithmeticCommand::Not),
-            _ => Err(CommandParseError),
+            _ => Err(CommandParseError {
+                command: s.to_owned(),
+            }),
         }
     }
 }
@@ -107,7 +112,9 @@ impl FromStr for StackOperation {
         match s {
             "push" => Ok(StackOperation::Push),
             "pop" => Ok(StackOperation::Pop),
-            _ => Err(CommandParseError),
+            _ => Err(CommandParseError {
+                command: s.to_owned(),
+            }),
         }
     }
 }
