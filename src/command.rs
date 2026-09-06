@@ -10,6 +10,10 @@ pub enum Command {
         index: u16,
     },
     Arithmetic(ArithmeticCommand),
+    BranchingOperation {
+        operation: BranchingOperation,
+        label: Label,
+    },
 }
 
 impl Display for Command {
@@ -23,6 +27,9 @@ impl Display for Command {
                 write!(f, "{:?} {:?} {}", operation, segment, index)
             }
             Command::Arithmetic(command) => write!(f, "{:?}", command),
+            Command::BranchingOperation { operation, label } => {
+                write!(f, "{:?} {}", operation, label)
+            }
         }
     }
 }
@@ -47,6 +54,15 @@ pub enum ArithmeticCommand {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum BranchingOperation {
+    Label,
+    Goto,
+    IfGoto,
+}
+
+pub type Label = String;
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct CommandParseError {
     command: String,
 }
@@ -65,6 +81,15 @@ impl FromStr for Command {
                 Ok(cmd) => Ok(Command::Arithmetic(cmd)),
                 Err(_) => Err(parse_error()),
             },
+            2 => {
+                let operation = components[0]
+                    .parse::<BranchingOperation>()
+                    .map_err(|_| parse_error())?;
+
+                let label: Label = components[1].into();
+
+                Ok(Command::BranchingOperation { operation, label })
+            }
             3 => {
                 let operation = components[0]
                     .parse::<StackOperation>()
@@ -112,6 +137,20 @@ impl FromStr for StackOperation {
         match s {
             "push" => Ok(StackOperation::Push),
             "pop" => Ok(StackOperation::Pop),
+            _ => Err(CommandParseError {
+                command: s.to_owned(),
+            }),
+        }
+    }
+}
+
+impl FromStr for BranchingOperation {
+    type Err = CommandParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "label" => Ok(BranchingOperation::Label {}),
+            "goto" => Ok(BranchingOperation::Goto),
+            "if-goto" => Ok(BranchingOperation::IfGoto),
             _ => Err(CommandParseError {
                 command: s.to_owned(),
             }),

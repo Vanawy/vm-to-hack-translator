@@ -1,4 +1,4 @@
-use crate::command::{ArithmeticCommand, Command, StackOperation};
+use crate::command::{ArithmeticCommand, BranchingOperation, Command, Label, StackOperation};
 use crate::segment::Segment;
 use indoc::{formatdoc, indoc};
 
@@ -28,6 +28,9 @@ impl Translator {
                 index,
             } => self.translate_stack(operation, segment, index),
             Command::Arithmetic(arithmetic) => self.translate_arithmetic(arithmetic),
+            Command::BranchingOperation { operation, label } => {
+                self.translate_branching(operation, label)
+            }
         }
         .iter()
         .for_each(|s| {
@@ -196,6 +199,25 @@ impl Translator {
             },
             push_data_to_stack(),
         ]
+    }
+
+    fn translate_branching(&self, operation: BranchingOperation, label: Label) -> Vec<String> {
+        match operation {
+            BranchingOperation::Label => vec![format!("({})", label)],
+            BranchingOperation::Goto => vec![formatdoc! {
+                "@{label}
+                0;JMP",
+                label = label
+            }],
+            BranchingOperation::IfGoto => vec![
+                pop_data_from_stack(),
+                formatdoc! {
+                    "@{label}
+                    D;JGT",
+                    label = label
+                },
+            ],
+        }
     }
 }
 
