@@ -76,35 +76,17 @@ impl FromStr for Command {
             command: s.to_owned(),
         };
 
-        match components.len() {
-            1 => match components[0].parse::<ArithmeticCommand>() {
-                Ok(cmd) => Ok(Command::Arithmetic(cmd)),
-                Err(_) => Err(parse_error()),
-            },
-            2 => {
-                let operation = components[0]
-                    .parse::<BranchingOperation>()
-                    .map_err(|_| parse_error())?;
-
-                let label: Label = components[1].into();
-
-                Ok(Command::BranchingOperation { operation, label })
-            }
-            3 => {
-                let operation = components[0]
-                    .parse::<StackOperation>()
-                    .map_err(|_| parse_error())?;
-                let segment = components[1]
-                    .parse::<Segment>()
-                    .map_err(|_| parse_error())?;
-                let index = components[2].parse::<u16>().map_err(|_| parse_error())?;
-
-                Ok(Command::Stack {
-                    operation,
-                    segment,
-                    index,
-                })
-            }
+        match components[..] {
+            [cmd] => Ok(Command::Arithmetic(cmd.parse::<ArithmeticCommand>()?)),
+            [op, label] => Ok(Command::BranchingOperation {
+                operation: op.parse::<BranchingOperation>()?,
+                label: label.into(),
+            }),
+            [op, segment, index] => Ok(Command::Stack {
+                operation: op.parse::<StackOperation>()?,
+                segment: segment.parse::<Segment>().map_err(|_| parse_error())?,
+                index: index.parse::<u16>().map_err(|_| parse_error())?,
+            }),
             _ => Err(parse_error()),
         }
     }
