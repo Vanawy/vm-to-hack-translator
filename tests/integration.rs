@@ -1,5 +1,5 @@
 use std::{fs, path::PathBuf};
-use vm_translator::translate;
+use vm_translator::{TranslatorError, translate};
 
 fn compare(filename: &str) {
     let mut path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -11,8 +11,8 @@ fn compare(filename: &str) {
     let vm = path.join(filename.to_owned() + ".vm");
 
     assert_eq!(
+        fs::read_to_string(asm).unwrap(),
         translate(filename.to_owned() + ".vm", fs::read_to_string(vm).unwrap()).unwrap(),
-        fs::read_to_string(asm).unwrap()
     )
 }
 
@@ -40,4 +40,20 @@ fn static_test() {
 #[test]
 fn basic_loop() {
     compare("BasicLoop");
+}
+
+#[test]
+fn file_with_error() {
+    let mut path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("tests/res/");
+
+    let filename = "BasicLoopBroken.vm";
+    path.push(filename.to_owned());
+
+    assert_eq!(
+        Err(TranslatorError {
+            message: "line 12: CommandParseError { command: \"pus argument 0\" }".to_owned()
+        }),
+        translate(filename.to_owned(), fs::read_to_string(path).unwrap())
+    );
 }
