@@ -1,4 +1,3 @@
-use crate::command::Command;
 pub use crate::translator::Translator;
 
 mod command;
@@ -10,18 +9,25 @@ pub struct TranslatorError {
     pub message: String,
 }
 
+struct Line {
+    content: String,
+    number: usize,
+}
+
 pub fn translate(filename: String, input: String) -> Result<String, TranslatorError> {
     let mut translator = Translator::new(filename.clone());
 
     let lines: Vec<String> = input
         .lines()
         .enumerate()
-        .map(|(n, s)| (n, s.trim().to_lowercase()))
-        .map(|(n, s)| (n, remove_comment(&s)))
-        .filter(|(_, s)| !s.is_empty())
-        .map(|(n, s)| {
-            let command = s.parse::<Command>().map_err(|error| TranslatorError {
-                message: format!("line {}: {:?}", n + 1, error),
+        .map(|(n, s)| Line {
+            content: remove_comment(&s.trim().to_lowercase()),
+            number: n + 1,
+        })
+        .filter(|l| !l.content.is_empty())
+        .map(|line| {
+            let command = line.content.parse().map_err(|error| TranslatorError {
+                message: format!("line {}: {:?}", line.number, error),
             })?;
 
             Ok(translator.code(command))

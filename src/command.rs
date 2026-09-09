@@ -1,5 +1,5 @@
 use crate::segment::Segment;
-use std::fmt::{Display, Error};
+use std::fmt::Display;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -20,30 +20,6 @@ pub enum Command {
         name: String,
         n_args: u16,
     },
-}
-
-impl Display for Command {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Command::Stack {
-                operation,
-                segment,
-                index,
-            } => {
-                write!(f, "{:?} {:?} {}", operation, segment, index)
-            }
-            Command::Arithmetic(command) => write!(f, "{:?}", command),
-            Command::BranchingOperation { operation, label } => {
-                write!(f, "{:?} {}", operation, label)
-            }
-            Command::Function {
-                statement,
-                name,
-                n_args,
-            } => write!(f, "{:?} {} {}", statement, name, n_args),
-            Command::Return => write!(f, "return"),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -84,6 +60,30 @@ pub enum FunctionStatement {
 #[derive(Debug, PartialEq, Eq)]
 pub struct CommandParseError {
     command: String,
+}
+
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Command::Stack {
+                operation,
+                segment,
+                index,
+            } => {
+                write!(f, "{:?} {:?} {}", operation, segment, index)
+            }
+            Command::Arithmetic(command) => write!(f, "{:?}", command),
+            Command::BranchingOperation { operation, label } => {
+                write!(f, "{:?} {}", operation, label)
+            }
+            Command::Function {
+                statement,
+                name,
+                n_args,
+            } => write!(f, "{:?} {} {}", statement, name, n_args),
+            Command::Return => write!(f, "return"),
+        }
+    }
 }
 
 impl FromStr for Command {
