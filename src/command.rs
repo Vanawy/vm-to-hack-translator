@@ -1,5 +1,5 @@
 use crate::segment::Segment;
-use std::fmt::Display;
+use std::fmt::{Display, Error};
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -13,6 +13,12 @@ pub enum Command {
     BranchingOperation {
         operation: BranchingOperation,
         label: Label,
+    },
+    Return,
+    Function {
+        statement: FunctionStatement,
+        name: String,
+        n_args: u16,
     },
 }
 
@@ -30,6 +36,12 @@ impl Display for Command {
             Command::BranchingOperation { operation, label } => {
                 write!(f, "{:?} {}", operation, label)
             }
+            Command::Function {
+                statement,
+                name,
+                n_args,
+            } => write!(f, "{:?} {} {}", statement, name, n_args),
+            Command::Return => write!(f, "return"),
         }
     }
 }
@@ -63,6 +75,13 @@ pub enum BranchingOperation {
 pub type Label = String;
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum FunctionStatement {
+    Call,
+    Declaration,
+    Return,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct CommandParseError {
     command: String,
 }
@@ -71,23 +90,43 @@ impl FromStr for Command {
     type Err = CommandParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let components = s.split_whitespace().collect::<Vec<&str>>();
-        let parse_error = || CommandParseError {
+        let err = || CommandParseError {
             command: s.to_owned(),
         };
 
-        match components[..] {
-            [cmd] => Ok(Command::Arithmetic(cmd.parse::<ArithmeticCommand>()?)),
-            [op, label] => Ok(Command::BranchingOperation {
-                operation: op.parse::<BranchingOperation>()?,
-                label: label.into(),
+        let mut tokens = s.split_whitespace();
+        match (tokens.next(), tokens.next(), tokens.next(), tokens.next()) {
+            (Some(a), None, None, None) => {
+                if let Ok(command) = a.parse() {
+                    Ok(Command::Arithmetic(command))
+                } else if let Ok(FunctionStatement::Return) = a.parse() {
+                    Ok(Command::Return)
+                } else {
+                    Err(err())
+                }
+            }
+            (Some(a), Some(b), None, None) => Ok(Command::BranchingOperation {
+                operation: a.parse()?,
+                label: b.into(),
             }),
-            [op, segment, index] => Ok(Command::Stack {
-                operation: op.parse::<StackOperation>()?,
-                segment: segment.parse::<Segment>().map_err(|_| parse_error())?,
-                index: index.parse::<u16>().map_err(|_| parse_error())?,
-            }),
-            _ => Err(parse_error()),
+            (Some(a), Some(b), Some(c), None) => {
+                if let Ok(operation) = a.parse() {
+                    Ok(Command::Stack {
+                        operation: operation,
+                        segment: b.parse().map_err(|_| err())?,
+                        index: c.parse().map_err(|_| err())?,
+                    })
+                } else if let Ok(statement) = a.parse() {
+                    Ok(Command::Function {
+                        statement,
+                        name: b.into(),
+                        n_args: c.parse().map_err(|_| err())?,
+                    })
+                } else {
+                    Err(err())
+                }
+            }
+            _ => Err(err()),
         }
     }
 }
@@ -133,6 +172,20 @@ impl FromStr for BranchingOperation {
             "label" => Ok(BranchingOperation::Label {}),
             "goto" => Ok(BranchingOperation::Goto),
             "if-goto" => Ok(BranchingOperation::IfGoto),
+            _ => Err(CommandParseError {
+                command: s.to_owned(),
+            }),
+        }
+    }
+}
+
+impl FromStr for FunctionStatement {
+    type Err = CommandParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "call" => Ok(FunctionStatement::Call),
+            "function" => Ok(FunctionStatement::Declaration),
+            "return" => Ok(FunctionStatement::Return),
             _ => Err(CommandParseError {
                 command: s.to_owned(),
             }),
@@ -194,5 +247,21 @@ mod tests {
             Command::Arithmetic(ArithmeticCommand::GreaterThan),
             "gt".parse::<Command>().unwrap()
         );
+    }
+
+    #[test]
+    fn parse_garbage() {
+        for garbage in [
+            "asdasdasd asdasdasd asdasdasd asdasdasd",
+            "push constant 36 asdasdasd",
+            "pop this this",
+        ] {
+            assert_eq!(
+                Err(CommandParseError {
+                    command: garbage.into()
+                }),
+                garbage.parse::<Command>()
+            );
+        }
     }
 }

@@ -1,4 +1,6 @@
-use crate::command::{ArithmeticCommand, BranchingOperation, Command, Label, StackOperation};
+use crate::command::{
+    ArithmeticCommand, BranchingOperation, Command, FunctionStatement, Label, StackOperation,
+};
 use crate::segment::Segment;
 use indoc::{formatdoc, indoc};
 
@@ -18,7 +20,7 @@ impl Translator {
     }
 
     pub fn code(&mut self, command: Command) -> Vec<String> {
-        // println!("-> {}", command);
+        println!("-> {}", command);
 
         let mut res = vec![format!("// {}", command)];
         match command {
@@ -31,6 +33,12 @@ impl Translator {
             Command::BranchingOperation { operation, label } => {
                 self.translate_branching(operation, label)
             }
+            Command::Function {
+                statement,
+                name,
+                n_args,
+            } => self.translate_function(statement, &name, n_args),
+            Command::Return => self.translate_return(),
         }
         .iter()
         .for_each(|s| {
@@ -218,6 +226,19 @@ impl Translator {
                 },
             ],
         }
+    }
+
+    fn translate_function(
+        &self,
+        statement: FunctionStatement,
+        name: &str,
+        n_args: u16,
+    ) -> Vec<String> {
+        todo!()
+    }
+
+    fn translate_return(&self) -> Vec<String> {
+        todo!()
     }
 }
 
