@@ -250,6 +250,31 @@ mod tests {
     }
 
     #[test]
+    fn parse_branching() {
+        assert_eq!(
+            Command::BranchingOperation {
+                operation: BranchingOperation::Label,
+                label: "LOOP_START".into()
+            },
+            "label LOOP_START".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::BranchingOperation {
+                operation: BranchingOperation::IfGoto,
+                label: "LOOP_START".into()
+            },
+            "if-goto LOOP_START".parse::<Command>().unwrap()
+        );
+        assert_eq!(
+            Command::BranchingOperation {
+                operation: BranchingOperation::Goto,
+                label: "LOOP_START".into()
+            },
+            "goto LOOP_START".parse::<Command>().unwrap()
+        );
+    }
+
+    #[test]
     fn parse_garbage() {
         for garbage in [
             "asdasdasd asdasdasd asdasdasd asdasdasd",
