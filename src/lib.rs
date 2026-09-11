@@ -20,11 +20,11 @@ pub fn translate(filename: String, input: String) -> Result<String, TranslatorEr
     let lines: Vec<String> = input
         .lines()
         .enumerate()
-        .map(|(n, s)| Line {
-            content: remove_comment(&s.trim().to_lowercase()),
-            number: n + 1,
+        .map(|(line_index, string_content)| Line {
+            content: remove_comment(&string_content.trim().to_lowercase()),
+            number: line_index + 1,
         })
-        .filter(|l| !l.content.is_empty())
+        .filter(|line| !line.content.is_empty())
         .map(|line| {
             let command = line.content.parse().map_err(|error| TranslatorError {
                 message: format!("line {}: {:?}", line.number, error),
