@@ -18,7 +18,7 @@ D=M
 A=M
 M=D
 // Label loop_start
-(loop_start)
+(BasicLoop.vm$loop_start)
 // Push Argument 0
 @ARG
 D=M
@@ -117,7 +117,7 @@ M=M+1
 @SP
 AM=M-1
 D=M
-@loop_start
+@BasicLoop.vm$loop_start
 D;JGT
 // Push Local 0
 @LCL

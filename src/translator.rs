@@ -1,5 +1,5 @@
 use crate::command::{
-    ArithmeticCommand, BranchingOperation, Command, FunctionStatement, Label, StackOperation,
+    ArithmeticCommand, BranchingOperation, Command, FunctionStatement, StackOperation,
 };
 use crate::segment::Segment;
 use indoc::{formatdoc, indoc};
@@ -109,10 +109,26 @@ impl Translator {
     fn translate_arithmetic(&mut self, command: ArithmeticCommand) -> Vec<String> {
         match command {
             ArithmeticCommand::Negate => {
-                vec![pop_data_from_stack(), "D=-D".into(), push_data_to_stack()]
+                vec![
+                    indoc! {
+                        "@SP
+                        A=M-1
+                        M=-M
+                        "
+                    }
+                    .into(),
+                ]
             }
             ArithmeticCommand::Not => {
-                vec![pop_data_from_stack(), "D=!D".into(), push_data_to_stack()]
+                vec![
+                    indoc! {
+                        "@SP
+                        A=M-1
+                        M=!M
+                        "
+                    }
+                    .into(),
+                ]
             }
             ArithmeticCommand::Equals
             | ArithmeticCommand::GreaterThan
@@ -290,11 +306,11 @@ impl Translator {
                 D=M+1
                 @SP
                 M=D
-                
+
                 // > THAT = *(endFrame - 1)
                 {end_frame}
                 D=M
-                
+
                 AM=M-1
                 D=M
                 @THAT
@@ -409,7 +425,7 @@ impl Translator {
         let mut res = vec![
             format!("@{}", label), // @label
         ];
-        res.push("D=A".into()); // D = 
+        res.push("D=A".into()); // D =
         res.push(push_data_to_stack());
         res
     }
