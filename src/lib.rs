@@ -1,3 +1,5 @@
+use std::fmt::{self};
+
 pub use crate::translator::Translator;
 
 mod command;
@@ -7,6 +9,14 @@ mod translator;
 #[derive(Debug, PartialEq, Eq)]
 pub struct TranslatorError {
     pub message: String,
+}
+
+impl std::error::Error for TranslatorError {}
+
+impl fmt::Display for TranslatorError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
 }
 
 struct Line {

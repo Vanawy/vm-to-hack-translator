@@ -23,7 +23,7 @@ impl Translator {
     }
 
     pub fn code(&mut self, command: Command) -> Vec<String> {
-        println!("-> {}", command);
+        // println!("-> {}", command);
 
         let mut res = vec![format!("// {}", command)];
         match command {
@@ -45,7 +45,7 @@ impl Translator {
         }
         .iter()
         .for_each(|s| {
-            println!("{}", s);
+            // println!("{}", s);
             res.push(s.to_string());
         });
         res
